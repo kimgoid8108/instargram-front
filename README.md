@@ -42,6 +42,7 @@ loginfront/
 ## 인증 흐름
 
 1. **로그인 안 된 상태**:
+
    - `/`, `/[username]` 접근 시 → `/accounts/login`으로 리다이렉트
    - `/accounts/login`, `/accounts/signup` 접근 가능
 

@@ -1,37 +1,9 @@
 // API 클라이언트 - 백엔드와 통신하는 모든 API 호출
 import { apiRequest } from './api-client';
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
 
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: {
-    id: number;
-    email: string;
-    nickname: string;
-    profile_image_url?: string;
-  };
-}
-
-export interface SignupRequest {
-  email: string;
-  hashed_password: string;
-  nickname: string;
-  profile_image_url?: string;
-}
-
-export interface User {
-  id: number;
-  email: string;
-  nickname: string;
-  profile_image_url?: string;
-  created_at: string;
-  updated_at: string;
-}
+// 타입은 types/user.ts로 이동
+export type { User, LoginRequest, LoginResponse, SignupRequest, UpdateProfileRequest } from '@/types/user';
 
 // 로그인 API
 export async function login(data: LoginRequest): Promise<LoginResponse> {
@@ -68,11 +40,6 @@ export async function getMyProfile(token: string): Promise<User> {
 }
 
 // 프로필 업데이트 API
-export interface UpdateProfileRequest {
-  nickname?: string;
-  profile_image_url?: string;
-}
-
 export async function updateProfile(token: string, data: UpdateProfileRequest): Promise<User> {
   return apiRequest<User>('/users/me', {
     method: 'PATCH',
@@ -82,3 +49,7 @@ export async function updateProfile(token: string, data: UpdateProfileRequest): 
     body: JSON.stringify(data),
   });
 }
+
+// 게시물 관련 API는 lib/posts.api.ts로 이동
+export type { Post, CreatePostRequest } from '@/types/post';
+export { createPost, getPosts, deletePost } from './posts.api';

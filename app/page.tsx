@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getMyProfile } from "@/lib/api";
 import { getAccessToken, isAuthenticated } from "@/lib/auth";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import type { User } from "@/lib/api";
+import type { User } from "@/types/user";
 
 export default function HomePage() {
   const router = useRouter();
@@ -42,7 +42,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (user) {
-      router.push(`/${user.nickname}`);
+      // 한글 닉네임을 올바르게 URL 인코딩
+      const encodedNickname = encodeURIComponent(user.nickname);
+      router.push(`/${encodedNickname}`);
     }
   }, [user, router]);
 

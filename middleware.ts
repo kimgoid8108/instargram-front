@@ -8,28 +8,26 @@ export function middleware(request: NextRequest) {
   // 인증이 필요한 경로 체크
   const isProtectedPath = pathname === '/' || pathname.startsWith('/accounts/edit');
 
-  // username 기반 경로 체크 (숫자나 특수문자로 시작하지 않는 경로, accounts 제외)
+  // username 기반 경로 체크 (한글 포함, accounts 제외)
+  // 한글을 포함한 모든 문자를 허용하되, 파일 확장자는 제외
   const isUsernamePath =
-    /^\/[a-zA-Z0-9_]+$/.test(pathname) &&
+    /^\/[^\/]+$/.test(pathname) &&
     pathname !== '/' &&
     !pathname.startsWith('/accounts') &&
     !pathname.startsWith('/api') &&
-    !pathname.startsWith('/_next');
+    !pathname.startsWith('/_next') &&
+    !pathname.match(/\.\w+$/); // 파일 확장자 제외 (예: .jpg, .png 등)
 
-  // 인증 페이지 체크
-  const isAuthPath = pathname.startsWith('/accounts/login') || pathname.startsWith('/accounts/signup');
-
-  // 인증이 필요한 경로에 접근하는데 토큰이 없는 경우
+  // 인증이 필요한 경로에 접근하는데 토큰이 없는 경우만 체크
+  // (인증 페이지는 클라이언트 사이드에서 처리)
   if ((isProtectedPath || isUsernamePath) && !accessToken) {
     const loginUrl = new URL('/accounts/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 인증된 사용자가 로그인/회원가입 페이지에 접근하는 경우
-  if (isAuthPath && accessToken) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
+  // 인증 페이지의 리다이렉트는 클라이언트 사이드에서 처리하도록 제거
+  // sessionStorage와 쿠키 불일치로 인한 무한 루프 방지
 
   return NextResponse.next();
 }

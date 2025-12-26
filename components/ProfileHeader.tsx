@@ -26,6 +26,7 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({ user, stats }: ProfileHeaderProps) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // 통계 값 메모이제이션
@@ -71,6 +72,21 @@ export default function ProfileHeader({ user, stats }: ProfileHeaderProps) {
     return user.website.startsWith("http") ? user.website.replace(/^https?:\/\//, "") : user.website;
   }, [user.website]);
 
+  // 프로필 이미지 URL (캐시 무효화를 위한 timestamp 추가)
+  const profileImageUrl = useMemo(() => {
+    if (!user.profile_image_url || user.profile_image_url.trim() === '') {
+      return null;
+    }
+    // URL에 timestamp 쿼리스트링 추가 (캐시 무효화)
+    const separator = user.profile_image_url.includes('?') ? '&' : '?';
+    return `${user.profile_image_url}${separator}t=${Date.now()}`;
+  }, [user.profile_image_url]);
+
+  // 프로필 이미지 URL 변경 시 에러 상태 초기화
+  useEffect(() => {
+    setImageError(false);
+  }, [user.profile_image_url]);
+
   return (
     <div className="w-full bg-white">
       {/* 프로필 영역 */}
@@ -79,8 +95,19 @@ export default function ProfileHeader({ user, stats }: ProfileHeaderProps) {
           {/* 프로필 이미지 */}
           <div className="flex-shrink-0 flex justify-center md:justify-start">
             <div className="w-24 h-24 md:w-[150px] md:h-[150px] rounded-full bg-gray-200 overflow-hidden flex items-center justify-center border border-gray-300">
-              {user.profile_image_url ? (
-                <img src={user.profile_image_url} alt={user.nickname} className="w-full h-full object-cover" loading="lazy" />
+              {profileImageUrl && !imageError ? (
+                <img
+                  src={profileImageUrl}
+                  alt={user.nickname}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  key={user.profile_image_url || 'no-image'}
+                  onError={() => {
+                    console.error("❌ 이미지 로드 실패:", profileImageUrl);
+                    // 이미지 로드 실패 시 기본 아바타로 fallback
+                    setImageError(true);
+                  }}
+                />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-3xl md:text-5xl font-semibold">{profileInitial}</div>
               )}

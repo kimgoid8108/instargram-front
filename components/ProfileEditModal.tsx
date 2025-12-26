@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { updateProfile } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
 import { uploadProfileImage, deleteProfileImage } from "@/lib/supabase";
-import type { User, UpdateProfileRequest } from "@/lib/api";
+import type { User, UpdateProfileRequest } from "@/types/user";
 
 interface ProfileEditModalProps {
   user: User;
@@ -15,7 +15,7 @@ interface ProfileEditModalProps {
 
 export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: ProfileEditModalProps) {
   const [nickname, setNickname] = useState(user.nickname);
-  const [profileImage, setProfileImage] = useState<string | null>(user.profile_image_url || null);
+  const [profileImage, setProfileImage] = useState<File | string | null>(user.profile_image_url || null);
   const [previewImage, setPreviewImage] = useState<string | null>(user.profile_image_url || null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,22 +34,6 @@ export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: Pr
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Supabase 환경 변수 확인 (이미지 업로드 전에 체크)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey ||
-        supabaseUrl.includes('your-supabase') ||
-        supabaseKey.includes('your-supabase') ||
-        supabaseUrl === 'your-supabase-project-url-here' ||
-        supabaseKey === 'your-supabase-anon-key-here') {
-      setError("⚠️ Supabase가 설정되지 않았습니다.\n\n이미지 업로드를 사용하려면 .env.local 파일에 Supabase 정보를 설정하세요.\n\n닉네임만 변경하려면 이미지를 선택하지 마세요.");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      return;
-    }
 
     // 이미지 파일 검증
     if (!file.type.startsWith("image/")) {
@@ -70,8 +54,8 @@ export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: Pr
     };
     reader.readAsDataURL(file);
 
-    setProfileImage(file as any); // File 객체 저장
-    setError("");
+    setProfileImage(file); // File 객체 저장
+    setError(""); // Supabase 체크는 uploadProfileImage 호출 시 수행
   }, []);
 
   const handleRemoveImage = useCallback(() => {
@@ -101,10 +85,13 @@ export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: Pr
         updateData.nickname = nickname.trim();
       }
 
-      // 이미지 업로드
+      // 이미지 업로드 (변경 버튼 클릭 시에만 실행)
       if (profileImage instanceof File) {
         try {
+          console.log("📤 이미지 업로드 시작...");
           const imageUrl = await uploadProfileImage(profileImage, user.id);
+          console.log("✅ 업로드 성공, 이미지 URL:", imageUrl);
+
           updateData.profile_image_url = imageUrl;
 
           // 기존 이미지가 있으면 삭제
@@ -112,15 +99,9 @@ export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: Pr
             await deleteProfileImage(user.profile_image_url);
           }
         } catch (uploadError) {
+          // Supabase 업로드 실패 시 에러 메시지 표시
+          console.error("❌ 이미지 업로드 실패:", uploadError);
           const errorMessage = uploadError instanceof Error ? uploadError.message : "이미지 업로드에 실패했습니다.";
-
-          // Supabase 환경 변수 에러인 경우, 이미지 없이 진행 가능하도록 안내
-          if (errorMessage.includes('환경 변수') || errorMessage.includes('Supabase')) {
-            setError(`⚠️ Supabase가 설정되지 않았습니다.\n\n닉네임만 변경하려면 이미지를 제거하고 다시 시도해주세요.\n\nSupabase 설정 방법은 ENV_SETUP_GUIDE.md 파일을 참고하세요.`);
-            setIsLoading(false);
-            return;
-          }
-
           setError(errorMessage);
           setIsLoading(false);
           return;
@@ -144,7 +125,14 @@ export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: Pr
       }
 
       // 프로필 업데이트
+      console.log("📝 백엔드로 업데이트 요청:", updateData);
       const updatedUser = await updateProfile(token, updateData);
+      console.log("✅ 백엔드 업데이트 완료, 반환된 사용자 데이터:", updatedUser);
+      console.log("  profile_image_url:", updatedUser.profile_image_url);
+
+      // 상태 즉시 반영 (모달 닫기 전)
+      setPreviewImage(updatedUser.profile_image_url || null);
+
       onUpdate(updatedUser);
       onClose();
     } catch (err) {
@@ -158,7 +146,7 @@ export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: Pr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="bg-white rounded-lg w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         {/* 헤더 */}
         <div className="flex items-center justify-between p-4 border-b border-gray-300">
@@ -213,14 +201,6 @@ export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: Pr
                   </button>
                 )}
               </div>
-              {typeof window !== 'undefined' &&
-               (!process.env.NEXT_PUBLIC_SUPABASE_URL ||
-                process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-supabase') ||
-                process.env.NEXT_PUBLIC_SUPABASE_URL === 'your-supabase-project-url-here') && (
-                <p className="text-xs text-gray-500 text-center mt-1 px-4">
-                  ⚠️ 이미지 업로드를 사용하려면 Supabase 설정이 필요합니다
-                </p>
-              )}
             </div>
           </div>
 
@@ -261,7 +241,7 @@ export default function ProfileEditModal({ user, isOpen, onClose, onUpdate }: Pr
               className="flex-1 px-4 py-2 text-sm font-semibold bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
               disabled={isLoading || nickname.trim().length < 2}
             >
-              {isLoading ? "저장 중..." : "제출"}
+              {isLoading ? "변경 중..." : "변경"}
             </button>
           </div>
         </form>

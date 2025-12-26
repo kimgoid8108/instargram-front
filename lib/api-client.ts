@@ -64,14 +64,39 @@ export async function apiRequest<T>(
       }
     );
   } catch (error) {
-    throw new Error(handleNetworkError(error));
+    // 네트워크 에러를 명확한 에러 메시지로 변환하여 throw
+    // 호출하는 쪽(컴포넌트)에서 catch하여 UI에 표시함
+    const errorMessage = handleNetworkError(error);
+    throw new Error(errorMessage);
   }
 
-  let responseData: any;
+  let responseData: unknown;
+
+  // 응답 본문이 있는지 확인
+  const contentType = response.headers.get('content-type');
+  const contentLength = response.headers.get('content-length');
+
+  // 본문이 없거나 빈 응답인 경우 (DELETE 요청 등)
+  if (contentLength === '0' || !contentType || !contentType.includes('application/json')) {
+    // 204 No Content 또는 빈 응답인 경우
+    if (response.status === 204 || response.status === 200) {
+      return undefined as T;
+    }
+  }
 
   try {
-    responseData = await response.json();
+    const text = await response.text();
+    // 빈 문자열인 경우
+    if (!text || text.trim() === '') {
+      return undefined as T;
+    }
+    // JSON 파싱 시도
+    responseData = JSON.parse(text) as T;
   } catch (error) {
+    // JSON 파싱 실패 시, 응답이 성공이고 본문이 비어있는 경우는 허용
+    if (response.ok && (response.status === 204 || response.status === 200)) {
+      return undefined as T;
+    }
     const statusText = response.statusText || '알 수 없는 오류';
     throw new Error(`서버 응답을 파싱할 수 없습니다 (${response.status}: ${statusText})`);
   }
@@ -80,12 +105,15 @@ export async function apiRequest<T>(
     let errorMessage = '요청에 실패했습니다.';
 
     // NestJS ValidationPipe 에러 형식 처리
-    if (Array.isArray(responseData.message)) {
-      errorMessage = responseData.message.join(', ');
-    } else if (responseData.message) {
-      errorMessage = responseData.message;
-    } else if (typeof responseData === 'string') {
-      errorMessage = responseData;
+    const errorData = responseData as { message?: string | string[] } | string;
+    if (typeof errorData === 'string') {
+      errorMessage = errorData;
+    } else if (errorData && typeof errorData === 'object') {
+      if (Array.isArray(errorData.message)) {
+        errorMessage = errorData.message.join(', ');
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
     }
 
     // HTTP 상태 코드별 기본 메시지
@@ -104,5 +132,5 @@ export async function apiRequest<T>(
     throw new Error(errorMessage);
   }
 
-  return responseData;
+  return responseData as T;
 }
