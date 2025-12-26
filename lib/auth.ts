@@ -12,7 +12,7 @@ export function setAccessToken(token: string): void {
       throw new Error('유효하지 않은 토큰입니다.');
     }
     sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
-    // Cookie에도 저장 (middleware에서 사용) - session cookie로 설정 (브라우저 닫으면 사라짐)
+    // Cookie에도 저장 (선택적 사용) - session cookie로 설정 (브라우저 닫으면 사라짐)
     document.cookie = `${ACCESS_TOKEN_KEY}=${token}; path=/; SameSite=Lax`;
   }
 }
