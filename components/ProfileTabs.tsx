@@ -1,37 +1,40 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 
 // 탭 버튼 컴포넌트
 const TabButton = ({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) => (
   <button onClick={onClick} className={`flex items-center gap-1 px-4 py-4 border-t ${active ? "border-gray-900 text-gray-900" : "border-transparent text-gray-400"}`} aria-label={label}>
     {icon}
+    <span className="hidden md:inline text-sm font-semibold">{label}</span>
   </button>
 );
 
 interface ProfileTabsProps {
+  activeTab?: "posts" | "saved" | "tagged";
   onTabChange?: (tab: "posts" | "saved" | "tagged") => void;
 }
 
-export default function ProfileTabs({ onTabChange }: ProfileTabsProps) {
-  const [activeTab, setActiveTab] = useState<"posts" | "saved" | "tagged">("posts");
+export default function ProfileTabs({ activeTab: externalActiveTab, onTabChange }: ProfileTabsProps) {
+  const [internalActiveTab, setInternalActiveTab] = useState<"posts" | "saved" | "tagged">("posts");
+
+  // 외부에서 activeTab을 제어하는 경우와 내부에서 제어하는 경우 모두 지원
+  const activeTab = externalActiveTab ?? internalActiveTab;
 
   const handleTabChange = useCallback(
     (tab: "posts" | "saved" | "tagged") => {
-      setActiveTab(tab);
+      if (!externalActiveTab) {
+        setInternalActiveTab(tab);
+      }
       onTabChange?.(tab);
     },
-    [onTabChange]
+    [externalActiveTab, onTabChange]
   );
-
-  useEffect(() => {
-    onTabChange?.(activeTab);
-  }, [activeTab, onTabChange]);
 
   return (
     <>
       <div className="w-full max-w-[935px] mx-auto border-t border-gray-300">
-        <div className="flex justify-center gap-70">
+        <div className="flex justify-center md:justify-start gap-4">
           <TabButton
             active={activeTab === "posts"}
             onClick={() => handleTabChange("posts")}

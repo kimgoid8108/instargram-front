@@ -1,3 +1,5 @@
+"use client";
+
 // 프로필 편집 및 보관된 스토리 보기 버튼 컴포넌트
 
 interface ProfileActionButtonsProps {

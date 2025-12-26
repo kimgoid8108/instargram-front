@@ -1,3 +1,5 @@
+"use client";
+
 // 공통 에러 메시지 컴포넌트
 
 interface ErrorMessageProps {

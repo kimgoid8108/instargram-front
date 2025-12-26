@@ -1,3 +1,5 @@
+"use client";
+
 // 인증 관련 유틸리티 함수
 
 const ACCESS_TOKEN_KEY = 'instagram_access_token';

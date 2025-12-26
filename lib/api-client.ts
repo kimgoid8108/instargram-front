@@ -1,6 +1,9 @@
 // 공통 API 클라이언트 유틸리티
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
+    ? process.env.NEXT_PUBLIC_API_URL
+    : 'http://localhost:3001';
 const REQUEST_TIMEOUT = 10000; // 10초
 
 // 네트워크 에러 처리 헬퍼

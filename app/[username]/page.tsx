@@ -165,7 +165,7 @@ export default function ProfilePage() {
       />
 
       {/* 탭 영역 */}
-      <ProfileTabs onTabChange={setActiveTab} />
+      <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* 게시물 그리드 영역 (posts 탭일 때만 표시) */}
       {activeTab === "posts" && (
