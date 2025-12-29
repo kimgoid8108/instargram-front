@@ -1,6 +1,6 @@
 // API 클라이언트 - 백엔드와 통신하는 모든 API 호출
 import { apiRequest } from './api-client';
-
+import type { User, LoginRequest, LoginResponse, SignupRequest, UpdateProfileRequest } from '@/types/user';
 
 // 타입은 types/user.ts로 이동
 export type { User, LoginRequest, LoginResponse, SignupRequest, UpdateProfileRequest } from '@/types/user';
