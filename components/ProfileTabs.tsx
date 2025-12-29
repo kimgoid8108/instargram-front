@@ -34,7 +34,7 @@ export default function ProfileTabs({ activeTab: externalActiveTab, onTabChange 
   return (
     <>
       <div className="w-full max-w-[935px] mx-auto border-t border-gray-300">
-        <div className="flex justify-center md:justify-start gap-4">
+        <div className="flex justify-center gap-[70px]">
           <TabButton
             active={activeTab === "posts"}
             onClick={() => handleTabChange("posts")}
