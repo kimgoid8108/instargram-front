@@ -1,9 +1,11 @@
 // API 클라이언트 - 백엔드와 통신하는 모든 API 호출
 import { apiRequest } from './api-client';
-import type { User, LoginRequest, LoginResponse, SignupRequest, UpdateProfileRequest } from '@/types/user';
+import type { LoginRequest, LoginResponse } from '@/types/auth';
+import type { User, SignupRequest, UpdateProfileRequest } from '@/types/user';
 
-// 타입은 types/user.ts로 이동
-export type { User, LoginRequest, LoginResponse, SignupRequest, UpdateProfileRequest } from '@/types/user';
+// 타입 re-export
+export type { LoginRequest, LoginResponse } from '@/types/auth';
+export type { User, SignupRequest, UpdateProfileRequest } from '@/types/user';
 
 // 로그인 API
 export async function login(data: LoginRequest): Promise<LoginResponse> {
