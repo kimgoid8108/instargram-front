@@ -9,10 +9,15 @@ import { createClient } from "@supabase/supabase-js";
  * 클라이언트 사이드에서만 실행되도록 보장됨
  */
 function getSupabaseClient() {
-  // 하드코딩된 Supabase 설정
-  const supabaseUrl = "https://eauekqrqywyxpfscwatt.supabase.co";
+  // 환경변수에서 Supabase 설정 가져오기
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://eauekqrqywyxpfscwatt.supabase.co";
   const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhdWVrcXJxeXd5eHBmc2N3YXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3MDI2ODcsImV4cCI6MjA4MjI3ODY4N30.gd2jPtLSCaUC5XbvQDCZdX0HQ6V-sVWJJ825_QO56io";
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Supabase 환경변수가 설정되지 않았습니다. NEXT_PUBLIC_SUPABASE_URL과 NEXT_PUBLIC_SUPABASE_ANON_KEY를 확인하세요.");
+  }
 
   return createClient(supabaseUrl, supabaseAnonKey);
 }
